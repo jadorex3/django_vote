@@ -2,16 +2,35 @@ from django.db import models
 from django.utils import timezone
 
 
+class Person(models.Model):
+    """Персонаж"""
+    first_name = models.CharField('Фамилия', max_length=100)
+    last_name = models.CharField('Имя', max_length=100)
+    patronymic = models.CharField('Отчество', max_length=100)
+    photo = models.ImageField('Фото')
+    age = models.PositiveSmallIntegerField('Возраст')
+    biography = models.TextField('Краткая биография', max_length=2000)
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
+
+    class Meta:
+        verbose_name = 'Персонаж'
+        verbose_name_plural = 'Персонажи'
+
+
 class Poll(models.Model):
     """Голосование"""
-    name = models.CharField(max_length=200, name='Название')
-    data_start = models.DateField(name='Дата начала', default=timezone.now())
-    data_end = models.DateField(name='Дата окончания')
+    name = models.CharField('Название', max_length=200)
+    data_start = models.DateField('Дата начала', default=timezone.now())
+    data_end = models.DateField('Дата окончания')
     max_polls_to_finished = models.PositiveIntegerField(
-        blank=True, null=True, name='Количество голосов до завершения')
+        'Количество голосов до завершения', blank=True, null=True)
+    # persons = models.ManyToManyField(
+    #     Person, verbose_name='Персонажи')
     persons = models.ManyToManyField(
-        'Person', through='Vote', through_fields=('poll', 'person'), verbose_name='Персонажи')
-    is_active = models.BooleanField(default=False, name='Активно')
+        Person, through='Vote', through_fields=('poll', 'person'), verbose_name='Персонажи')
+    is_active = models.BooleanField('Активно', default=True, )
 
     def poll_is_active(self):
         if self.data_start < timezone.now() < self.data_end:
@@ -26,27 +45,10 @@ class Poll(models.Model):
         verbose_name_plural = 'Голосования'
 
 
-class Person(models.Model):
-    """Персонаж"""
-    first_name = models.CharField(max_length=100, name='Фамилия')
-    last_name = models.CharField(max_length=100, name='Имя')
-    patronymic = models.CharField(max_length=100, name='Отчество')
-    photo = models.ImageField(name='Фото')
-    age = models.PositiveSmallIntegerField(name='Возраст')
-    biography = models.TextField(max_length=2000, name='Краткая биография')
-
-    def __str__(self):
-        return f'{self.first_name} {self.last_name}'
-
-    class Meta:
-        verbose_name = 'Персонаж'
-        verbose_name_plural = 'Персонажи'
-
-
 class Vote(models.Model):
     """Связь между персонажами и голосованием для хранения голосов"""
     poll = models.ForeignKey(
         Poll, on_delete=models.CASCADE, verbose_name='Голосование')
     person = models.ForeignKey(
         Person, on_delete=models.CASCADE, verbose_name='Персонаж')
-    vote = models.PositiveIntegerField(name='Количество голосов', default=0)
+    vote = models.PositiveIntegerField('Количество голосов', default=0)
